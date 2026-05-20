@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forecast Editable Table Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      background: #fafafa;
+    }
+
+    h1 {
+      margin-bottom: 16px;
+    }
+
+    .toolbar {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar input {
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+
+    .toolbar button {
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .current-user {
+      margin-bottom: 12px;
+      font-weight: bold;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 16px;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+      min-width: 120px;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    td[contenteditable="true"] {
+      background-color: #fffbe6;
+    }
+
+    td.changed {
+      background-color: #d9f7be;
+    }
+
+    #output {
+      margin-top: 20px;
+      padding: 12px;
+      background: #f7f7f7;
+      border: 1px solid #ddd;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Forecast Editable Table Demo</h1>
+
+  <div class="current-user">
+    Current User: <span id="currentUserDisplay"></span>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="userInput" placeholder="Enter user name, e.g. Alice" />
+    <button onclick="switchUser()">Switch User</button>
+    <button onclick="saveChanges()">Save</button>
+    <button onclick="resetHighlight()">Reset Highlight</button>
+    <button onclick="resetAllData()">Reset Data</button>
+  </div>
+
+  <table id="forecastTable">
+    <thead>
+      <tr>
+        <th>BU</th>
+        <th>Region</th>
+        <th>Product</th>
+        <th>Month</th>
+        <th>Forecast</th>
+        <th>Comment</th>
+        <th>Last Updated By</th>
+        <th>Last Updated Time</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="output">Changed cells will appear here after you click Save.</div>
+
+  <script>
+    let currentUser = localStorage.getItem("currentUser") || "Kelly";
+
+    const defaultData = [
+      {
+        rowId: "1",
+        BU: "A",
+        Region: "NA",
+        Product: "X1",
+        Month: "Apr",
+        Forecast: "100",
+        Comment: "",
+        LastUpdatedBy: "",
+        LastUpdatedTime: ""
+      },
+      {
+        rowId: "2",
+        BU: "A",
+        Region: "EU",
+        Product: "X2",
+        Month: "Apr",
+        Forecast: "200",
+        Comment: "",
+        LastUpdatedBy: "",
+        LastUpdatedTime: ""
+      },
+      {
+        rowId: "3",
+        BU: "B",
+        Region: "APAC",
+        Product: "X3",
+        Month: "Apr",
+        Forecast: "300",
+        Comment: "",
+        LastUpdatedBy: "",
+        LastUpdatedTime: ""
+      }
+    ];
+
+    function getData() {
+      const saved = localStorage.getItem("forecastData");
+      return saved ? JSON.parse(saved) : defaultData;
+    }
+
+    function saveData(data) {
+      localStorage.setItem("forecastData", JSON.stringify(data));
+    }
+
+    function updateCurrentUserDisplay() {
+      document.getElementById("currentUserDisplay").innerText = currentUser;
+      document.getElementById("userInput").value = currentUser;
+    }
+
+    function switchUser() {
+      const input = document.getElementById("userInput");
+      const newUser = input.value.trim();
+
+      if (!newUser) {
+        alert("Please enter a user name.");
+        return;
+      }
+
+      currentUser = newUser;
+      localStorage.setItem("currentUser", newUser);
+      updateCurrentUserDisplay();
+      document.getElementById("output").innerText = "Switched to user: " + newUser;
+    }
+
+    function renderTable() {
+      const data = getData();
+      const tbody = document.querySelector("#forecastTable tbody");
+      tbody.innerHTML = "";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.dataset.rowId = row.rowId;
+        tr.dataset.lastUpdatedTime = row.LastUpdatedTime || "";
+
+        tr.innerHTML = `
+          <td>${row.BU}</td>
+          <td>${row.Region}</td>
+          <td>${row.Product}</td>
+          <td>${row.Month}</td>
+          <td contenteditable="true" data-column="Forecast">${row.Forecast}</td>
+          <td contenteditable="true" data-column="Comment">${row.Comment}</td>
+          <td>${row.LastUpdatedBy}</td>
+          <td>${row.LastUpdatedTime}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      setupEditableCells();
+    }
+
+    function setupEditableCells() {
+      const editableCells = document.querySelectorAll('td[contenteditable="true"]');
+
+      editableCells.forEach(cell => {
+        cell.dataset.originalValue = cell.innerText.trim();
+
+        cell.addEventListener("input", () => {
+          if (cell.dataset.column === "Forecast") {
+            const cleaned = cell.innerText.replace(/[^0-9]/g, "");
+            if (cell.innerText !== cleaned) {
+              cell.innerText = cleaned;
+            }
+          }
+
+          if (cell.innerText.trim() !== cell.dataset.originalValue) {
+            cell.classList.add("changed");
+          } else {
+            cell.classList.remove("changed");
+          }
+        });
+      });
+    }
+
+    function saveChanges() {
+      const data = getData();
+      const editableCells = document.querySelectorAll('td[contenteditable="true"]');
+      const changes = [];
+
+      editableCells.forEach(cell => {
+        const row = cell.closest("tr");
+        const rowId = row.dataset.rowId;
+        const column = cell.dataset.column;
+        const newValue = cell.innerText.trim();
+
+        const targetRow = data.find(item => item.rowId === rowId);
+        const oldValue = targetRow[column];
+
+        const originalRowTimestamp = row.dataset.lastUpdatedTime || "";
+        const latestRowTimestamp = targetRow.LastUpdatedTime || "";   
+
+        if (oldValue !== newValue) {
+          if (originalRowTimestamp !== latestRowTimestamp) {
+            alert("Conflict detected: this row was updated by another user. Please refresh and try again.");
+            return;
+          }
+
+          const now = new Date().toLocaleString();
+
+          changes.push({
+            rowId,
+            column,
+            oldValue,
+            newValue,
+            updatedBy: currentUser,
+            updatedTime: now
+          });
+
+          targetRow[column] = newValue;
+          targetRow.LastUpdatedBy = currentUser;
+          targetRow.LastUpdatedTime = now;
+
+          cell.dataset.originalValue = newValue;
+          cell.classList.remove("changed");
+        }
+      });
+
+      saveData(data);
+      renderTable();
+      updateCurrentUserDisplay();
+
+      const output = document.getElementById("output");
+      if (changes.length === 0) {
+        output.innerText = "No changes detected.";
+      } else {
+        output.innerText = "Saved changes:\n" + JSON.stringify(changes, null, 2);
+      }
+    }
+
+    function resetHighlight() {
+      const editableCells = document.querySelectorAll('td[contenteditable="true"]');
+      editableCells.forEach(cell => {
+        cell.classList.remove("changed");
+      });
+      document.getElementById("output").innerText = "Highlight cleared.";
+    }
+
+    function resetAllData() {
+      localStorage.removeItem("forecastData");
+      localStorage.removeItem("currentUser");
+      currentUser = "Kelly";
+      renderTable();
+      updateCurrentUserDisplay();
+      document.getElementById("output").innerText = "Data reset to default values.";
+    }
+
+    renderTable();
+    updateCurrentUserDisplay();
+  </script>
+</body>
+</html>
