@@ -1,0 +1,106 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 24px;
+  background: #fafafa;
+  color: #1f2933;
+}
+
+h1 {
+  margin-bottom: 16px;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.user-panel {
+  margin-bottom: 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.toolbar {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toolbar label {
+  font-weight: bold;
+}
+
+.toolbar select {
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.toolbar button {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.current-user {
+  font-weight: bold;
+}
+
+.table-section {
+  margin-bottom: 24px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: white;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+  min-width: 120px;
+}
+
+th {
+  background-color: #f4f4f4;
+}
+
+td[contenteditable="true"] {
+  background-color: #fffbe6;
+}
+
+td.changed {
+  background-color: #d9f7be;
+}
+
+td.readonly {
+  background-color: #f5f5f5;
+  color: #697386;
+}
+
+td.empty-state {
+  color: #697386;
+  font-style: italic;
+  text-align: center;
+}
+
+#output {
+  margin-top: 20px;
+  padding: 12px;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  white-space: pre-wrap;
+}
